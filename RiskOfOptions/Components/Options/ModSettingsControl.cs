@@ -22,6 +22,8 @@ public abstract class ModSettingsControl<TValue, TOptionConfig> : ModSetting
     protected ITypedValueHolder<TValue> valueHolder;
 
     private UnityEngine.UI.RawImage modifiedIndicator;
+    private readonly UnityEngine.Color nonDefaultColor = new UnityEngine.Color(122f/255, 176f/255, 255f/255);
+    private readonly UnityEngine.Color hasChangedColor = new UnityEngine.Color(255f/255, 230f/255, 73f/255);
 
     public void SubmitValue(TValue newValue)
     {
@@ -159,8 +161,11 @@ public abstract class ModSettingsControl<TValue, TOptionConfig> : ModSetting
         CheckIfDisabled();
         RestartRequiredCheck();
 
-        if (modifiedIndicator)
-            modifiedIndicator.enabled = (!GetCurrentValue().Equals((TValue)option.ConfigEntry.DefaultValue));
+        if (modifiedIndicator) {
+            bool nonDefault = !GetCurrentValue().Equals((TValue)option.ConfigEntry.DefaultValue);
+            modifiedIndicator.enabled = nonDefault || HasChanged();
+            modifiedIndicator.color = HasChanged() ? hasChangedColor : nonDefaultColor;
+        }
 
         InUpdateControls = true;
         OnUpdateControls();
@@ -182,6 +187,6 @@ public abstract class ModSettingsControl<TValue, TOptionConfig> : ModSetting
         childTransform.sizeDelta = UnityEngine.Vector2.zero;
 
         modifiedIndicator = child.GetComponent<UnityEngine.UI.RawImage>();
-        modifiedIndicator.color = new UnityEngine.Color(122f/255, 176f/255, 255f/255);
+        modifiedIndicator.color = nonDefaultColor;
     }
 }
