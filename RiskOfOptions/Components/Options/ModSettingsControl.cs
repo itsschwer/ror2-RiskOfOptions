@@ -46,6 +46,20 @@ public abstract class ModSettingsControl<TValue, TOptionConfig> : ModSetting
         return valueHolder.Value;
     }
 
+    protected TValue GetDefaultValue()
+    {
+        //! This does breaks on mods that use ZioRiskOfOptions
+        if (option.ConfigEntry == null)
+        {
+#if DEBUG
+            UnityEngine.Debug.LogWarning($"{nameof(RiskOfOptions)}: Could not get default value, mod uses ZioRiskOfOptions?");
+#endif
+            return GetCurrentValue();
+        }
+
+        return (TValue)option.ConfigEntry.DefaultValue;
+    }
+
     public override bool HasChanged()
     {
         return _valueChanged;
@@ -69,7 +83,7 @@ public abstract class ModSettingsControl<TValue, TOptionConfig> : ModSetting
         if (option is null)
             return;
 
-        SubmitValue((TValue)option.ConfigEntry.DefaultValue);
+        SubmitValue(GetDefaultValue());
     }
 
     protected override void Awake()
@@ -161,8 +175,9 @@ public abstract class ModSettingsControl<TValue, TOptionConfig> : ModSetting
         CheckIfDisabled();
         RestartRequiredCheck();
 
-        if (modifiedIndicator) {
-            bool nonDefault = !GetCurrentValue().Equals((TValue)option.ConfigEntry.DefaultValue);
+        if (modifiedIndicator)
+        {
+            bool nonDefault = !GetCurrentValue().Equals(GetDefaultValue());
             modifiedIndicator.enabled = nonDefault || HasChanged();
             modifiedIndicator.color = HasChanged() ? hasChangedColor : nonDefaultColor;
         }
