@@ -21,9 +21,7 @@ public abstract class ModSettingsControl<TValue, TOptionConfig> : ModSetting
         
     protected ITypedValueHolder<TValue> valueHolder;
 
-    private UnityEngine.UI.RawImage modifiedIndicator;
-    private readonly UnityEngine.Color nonDefaultColor = new UnityEngine.Color(122f/255, 176f/255, 255f/255);
-    private readonly UnityEngine.Color hasChangedColor = new UnityEngine.Color(255f/255, 230f/255, 73f/255);
+    private UnityEngine.UI.RawImage? modifiedIndicator;
 
     public void SubmitValue(TValue newValue)
     {
@@ -48,7 +46,7 @@ public abstract class ModSettingsControl<TValue, TOptionConfig> : ModSetting
 
     protected TValue GetDefaultValue()
     {
-        //! This does breaks on mods that use ZioRiskOfOptions
+        // ConfigEntry is null on mods that use ZioRiskOfOptions (see https://github.com/Rune580/RiskOfOptions/pull/28 )
         if (option.ConfigEntry == null)
         {
 #if DEBUG
@@ -159,6 +157,16 @@ public abstract class ModSettingsControl<TValue, TOptionConfig> : ModSetting
         }
     }
 
+    public override void UpdateModifiedIndicator()
+    {
+        if (modifiedIndicator)
+        {
+            bool nonDefault = !GetCurrentValue().Equals(GetDefaultValue());
+            modifiedIndicator.enabled = (nonDefault || HasChanged()) && RiskOfOptionsPlugin.showModifiedIndicator!.Value;
+            modifiedIndicator.color = HasChanged() ? RiskOfOptionsPlugin.hasChangedModifiedColor!.Value : RiskOfOptionsPlugin.nonDefaultModifiedColor!.Value;
+        }
+    }
+
     protected bool InUpdateControls { get; private set; }
 
     protected void UpdateControls()
@@ -174,13 +182,7 @@ public abstract class ModSettingsControl<TValue, TOptionConfig> : ModSetting
 
         CheckIfDisabled();
         RestartRequiredCheck();
-
-        if (modifiedIndicator)
-        {
-            bool nonDefault = !GetCurrentValue().Equals(GetDefaultValue());
-            modifiedIndicator.enabled = nonDefault || HasChanged();
-            modifiedIndicator.color = HasChanged() ? hasChangedColor : nonDefaultColor;
-        }
+        UpdateModifiedIndicator();
 
         InUpdateControls = true;
         OnUpdateControls();
@@ -202,6 +204,7 @@ public abstract class ModSettingsControl<TValue, TOptionConfig> : ModSetting
         childTransform.sizeDelta = UnityEngine.Vector2.zero;
 
         modifiedIndicator = child.GetComponent<UnityEngine.UI.RawImage>();
-        modifiedIndicator.color = nonDefaultColor;
+        modifiedIndicator.color = RiskOfOptionsPlugin.nonDefaultModifiedColor!.Value;
+        modifiedIndicator.enabled = RiskOfOptionsPlugin.showModifiedIndicator!.Value;
     }
 }
